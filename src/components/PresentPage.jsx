@@ -1,7 +1,8 @@
-import Box from "@mui/material/Box";
+import moment from "moment";
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router";
+import { useParams, useNavigate } from "react-router";
 
+import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 
@@ -16,21 +17,35 @@ import TimerControls from "./Timer/TimerControls";
 import SectionTimer from "./SectionTimer";
 
 import { getExpiryTimestamp } from "../utils/time";
+import TimeDifferenceDisplay from "./TimeDifferenceDisplay";
 
 export default function PresentPage() {
   const { id } = useParams();
   const [currentSection, setCurrentSection] = useState(0);
   const [sectionExpiryTimestamp, setSectionExpiryTimestamp] = useState(null);
+  const [timeDifference, setTimeDifference] = useState(0); // used to store time saved or time lost
+  const navigate = useNavigate();
 
   const { presentations, editPresentation } = usePresentationsContext();
 
+  const stopTimer = () => {
+    // go back to previous page
+    navigate(`/${id}`);
+  };
+
   const nextSection = () => {
-    setCurrentSection((prev) => prev + 1);
+    const nextSectionIndex = currentSection + 1;
+    if (nextSectionIndex >= presentations.length) {
+      // stop timer
+      stopTimer();
+    }
+    setCurrentSection(nextSectionIndex);
   };
 
   const { restart, ...sectionTimerProps } = useSectionTimer({
     expiryTimestamp: sectionExpiryTimestamp,
-    onExpire: nextSection,
+    // TODO: autoPlay should be defined in the presention options instead of hardocded to false
+    autoPlay: false,
   });
 
   const presentation = presentations.find(
@@ -55,19 +70,24 @@ export default function PresentPage() {
     [totalDuration]
   );
 
+  const handleNextSection = () => {
+    // get difference between current time and section expiry timestamp
+    const now = new Date();
+    const secondsLeft = Math.floor(
+      (sectionExpiryTimestamp.getTime() - now.getTime()) / 1000
+    );
+
+    setTimeDifference((prev) => prev + secondsLeft);
+    nextSection();
+  };
+
   useEffect(() => {
     if (!presentation) return;
+
     const section = presentation.sections[currentSection];
-    console.log("section", section.name);
+
     setSectionExpiryTimestamp(getExpiryTimestamp(section.duration));
   }, [currentSection, presentation]);
-
-  // const getSectionExpiryTimestamp = () => {
-  //   const section = presentation.sections[currentSection];
-  //   return getExpiryTimestamp(section.duration);
-  // };
-
-  // console.log("sectionExpiryTimestamp", sectionExpiryTimestamp);
 
   if (!presentation) {
     return (
@@ -91,6 +111,9 @@ export default function PresentPage() {
 
         <Paper elevation={3} sx={{ textAlign: "center", mb: 2 }}>
           <TimerDisplay />
+          <Typography variant="caption">
+            <TimeDifferenceDisplay secondsDifference={timeDifference} />
+          </Typography>
         </Paper>
 
         <Paper elevation={3} sx={{ textAlign: "center" }}>
@@ -105,7 +128,13 @@ export default function PresentPage() {
         </Paper>
 
         <Box sx={{ mt: 2 }}>
-          <TimerControls />
+          <TimerControls
+            onNext={handleNextSection}
+            onPrevious={() => {
+              console.log("previous");
+            }}
+            onStop={stopTimer}
+          />
         </Box>
 
         <Box sx={{ mt: 2, textAlign: "center" }}>

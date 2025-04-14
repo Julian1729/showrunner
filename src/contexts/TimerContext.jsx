@@ -1,15 +1,22 @@
 import React, { createContext, useContext } from "react";
-import { useTimer } from "react-timer-hook";
+
+import useSectionTimer from "../hooks/use-section-timer";
 
 const TimerContext = createContext();
 
 export const TimerProvider = ({ expiryTimestamp, onExpire, children }) => {
-  const timer = useTimer({
-    expiryTimestamp,
+  // const timer = useTimer({
+  //   expiryTimestamp,
+  // });
+
+  const presentationTimer = useSectionTimer({
+    expiryTimestamp: expiryTimestamp,
   });
 
   return (
-    <TimerContext.Provider value={timer}>{children}</TimerContext.Provider>
+    <TimerContext.Provider value={presentationTimer}>
+      {children}
+    </TimerContext.Provider>
   );
 };
 

@@ -1,5 +1,10 @@
 {
   "name": "Showrunner",
+  "short_name": "Showrunner",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
   "icons": [
     {
       "src": "icons/512.png",

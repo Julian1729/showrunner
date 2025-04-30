@@ -4,10 +4,12 @@ const theme = createTheme({
   palette: {
     mode: "light",
     primary: {
-      main: "#2B50AA",
+      main: "#1A80E5",
     },
     secondary: {
       main: "#4F7396",
+      // add lighter color for secondary
+      light: "#D1DBE8",
     },
     // set color for text
     text: {
@@ -69,6 +71,44 @@ const theme = createTheme({
         containedPrimary: {
           backgroundColor: "#4F7396",
         },
+      },
+    },
+
+    // style filled text fields
+    MuiFilledInput: {
+      styleOverrides: {
+        root: {
+          backgroundColor: "#E8EDF2",
+          color: "text.primary",
+          borderRadius: "8px",
+          "&::before": {
+            content: "none",
+          },
+          "&::after": {
+            content: "none",
+          },
+          "&.Mui-focused": {
+            backgroundColor: "#F5F5F5",
+            borderColor: "#4F7396",
+          },
+          // ".MuiInputAdornment-root": {
+          //   marginTop: "0 !important",
+          // },
+        },
+      },
+    },
+  },
+
+  // set border radius for theme
+  shape: {
+    borderRadius: 12,
+  },
+
+  // radio button root change color
+  MuiRadio: {
+    styleOverrides: {
+      root: {
+        color: "#D1DBE8",
       },
     },
   },

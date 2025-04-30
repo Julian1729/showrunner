@@ -1,39 +1,61 @@
 import { useMemo, useState, useCallback, useEffect } from "react";
 import { NavLink } from "react-router";
 import moment from "moment";
-import { useParams } from "react-router";
+import { useParams, useNavigate } from "react-router";
 
-import Tooltip from "@mui/material/Tooltip";
-import IconButton from "@mui/material/IconButton";
-import Fab from "@mui/material/Fab";
-import AddIcon from "@mui/icons-material/Add";
-import StartIcon from "@mui/icons-material/Start";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import TableRow from "@mui/material/TableRow";
-import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
-import Paper from "@mui/material/Paper";
 import Box from "@mui/material/Box";
+import Radio from "@mui/material/Radio";
+import RadioGroup from "@mui/material/RadioGroup";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import FormControl from "@mui/material/FormControl";
+import FormLabel from "@mui/material/FormLabel";
+import Stack from "@mui/material/Stack";
+import Tooltip, { tooltipClasses } from "@mui/material/Tooltip";
+import HelpIcon from "@mui/icons-material/Help";
+import IconButton from "@mui/material/IconButton";
+import TextField from "@mui/material/TextField";
+import InputAdornment from "@mui/material/InputAdornment";
+import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 
-import { usePresentationsContext } from "../contexts/presentations-context";
+import usePresentations from "../hooks/use-presentations";
+
+import AppBar from "./AppBar";
 
 import MinutePicker from "./MinutePicker";
 import SectionDialog from "./SectionDialog";
+import SectionList from "./SectionList";
+
+// create custom styled FormControlLabel
+import { styled } from "@mui/material/styles";
+
+const TimingModeOptionButton = styled(FormControlLabel)(({ theme }) => ({
+  border: "1px solid #D1DBE8",
+  borderRadius: theme.shape.borderRadius,
+  paddingRight: 9,
+  margin: 0,
+  paddingTop: 4,
+  paddingBottom: 4,
+}));
+
+const timingTooltipText = `The "Fixed" mode allows you to set a specific duration for your presentation. The "Dynamic" mode calculates the duration based on the start and end times you set.`;
 
 export default function PresentationOverviewPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [unassignedMinutes, setUnassignedMinutes] = useState(0);
+  const [timerMode, setTimerMode] = useState("fixed");
+  const [startTime, setStartTime] = useState();
+  const [endTime, setEndTime] = useState();
 
-  const { presentations, editPresentation } = usePresentationsContext();
+  const { presentations, editPresentation } = usePresentations();
   const presentation = presentations.find(
     (presentation) => presentation.id === id
   );
+
+  console.log("presentation found", presentation);
 
   const addSection = ({ name, duration = 0 }) =>
     editPresentation(presentation.id, {
@@ -113,100 +135,98 @@ export default function PresentationOverviewPage() {
   };
 
   return (
-    <Box sx={{ p: 2 }}>
-      <Box sx={{ mb: 2, textAlign: "center" }}>
-        <Typography variant="h4" component="h1">
-          {presentation.name}
-        </Typography>
-        <Typography variant="caption">{totalDuration} minutes</Typography>
-      </Box>
-      <Box>
-        <Paper sx={{ width: "100%", mb: 2 }}>
-          <Toolbar
-            sx={[
-              {
-                pl: { sm: 2 },
-                pr: { xs: 1, sm: 1 },
-              },
-            ]}
+    <>
+      <AppBar
+        pageTitle="New Presentation"
+        onBack={() => navigate("/")}
+      ></AppBar>
+      <Stack spacing={3} sx={{ p: 2 }}>
+        <TextField label="Title" variant="filled" fullWidth />
+
+        <FormControl fullWidth>
+          <FormLabel
+            id="timing-mode-radio-group"
+            aria-label="timing mode"
+            sx={{ mb: 1 }}
           >
-            <Typography
-              sx={{ flex: "1 1 100%" }}
-              variant="h6"
-              id="tableTitle"
-              component="div"
-            >
-              Sections
-            </Typography>
-
-            <Tooltip title="Filter list" onClick={() => setDialogOpen(true)}>
-              <IconButton>
-                <AddIcon />
-              </IconButton>
+            Timing Mode
+            <Tooltip title={timingTooltipText} arrow>
+              <HelpIcon
+                sx={{
+                  fontSize: "0.8em",
+                  color: "#4F7396",
+                  marginLeft: 1,
+                }}
+              />
             </Tooltip>
-          </Toolbar>
-          <TableContainer>
-            <Table aria-label="simple table">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Title</TableCell>
-                  <TableCell align="right">Minutes</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {presentation?.sections?.length ? (
-                  presentation.sections.map((section) => (
-                    <TableRow
-                      key={section.name}
-                      sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-                    >
-                      <TableCell component="th" scope="row">
-                        {section.name}
-                      </TableCell>
-                      <TableCell align="right">
-                        <MinutePicker
-                          sx={{ marginLeft: "auto" }}
-                          value={section.duration}
-                          min={0}
-                          max={unassignedMinutes + section.duration}
-                          onChange={(newValue) =>
-                            handleDurationChange(section.name, newValue)
-                          }
-                          onDelete={() => deleteSection(section.name)}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={2} align="center">
-                      No sections yet
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Paper>
-      </Box>
+          </FormLabel>
+          <RadioGroup
+            aria-labelledby="timing-mode-radio-group"
+            name="mode"
+            onChange={(e) => setTimerMode(e.target.value)}
+            value={timerMode}
+            row
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, 1fr)",
+              gap: 1,
+            }}
+          >
+            <TimingModeOptionButton
+              value="fixed"
+              control={<Radio />}
+              label="Fixed"
+            />
+            <TimingModeOptionButton
+              value="dynamic"
+              control={<Radio />}
+              label="Dynamic"
+            />
+          </RadioGroup>
+        </FormControl>
 
+        <TextField
+          label="Duration"
+          variant="filled"
+          type="number"
+          fullWidth
+          defaultValue="0"
+          slotProps={{
+            input: {
+              endAdornment: (
+                <InputAdornment position="start">minutes</InputAdornment>
+              ),
+            },
+          }}
+        />
+
+        <Box sx={{ mt: 3, display: "flex", gap: 2 }}>
+          <TimePicker
+            name="startTime"
+            value={startTime}
+            onChange={setStartTime}
+            label="Start Time"
+          />
+          <TimePicker
+            name="endTime"
+            value={endTime}
+            onChange={setEndTime}
+            label="End Time"
+          />
+        </Box>
+
+        <Box>
+          <Typography variant="h6" component="h2" sx={{ mb: 1 }}>
+            Sections
+          </Typography>
+          <SectionList sections={presentation.sections} />
+        </Box>
+      </Stack>
       <SectionDialog
         open={dialogOpen}
         setOpen={setDialogOpen}
         onSubmit={handleNewSectionSubmit}
       />
-      <Fab
-        color="primary"
-        aria-label="start"
-        title="Start Presentation"
-        variant="extended"
-        component={NavLink}
-        to={`present`}
-        sx={{ position: "fixed", bottom: 16, right: 16 }} // Add this line
-      >
-        Start
-        <StartIcon sx={{ marginLeft: "5px" }} />
-      </Fab>
-    </Box>
+    </>
   );
 }

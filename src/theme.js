@@ -14,6 +14,7 @@ const theme = createTheme({
     // set color for text
     text: {
       primary: "#0D141C",
+      light: "#4F7396",
       secondary: "#4F7396",
     },
   },

@@ -1,10 +1,10 @@
-// use srtyled components from MUI
-import { Typography } from "@mui/material";
+import { useState } from "react";
 import { styled } from "@mui/material/styles";
+import { useLongPress } from "use-long-press";
 
-import MinutePicker from "./MinutePicker";
+import SectionItem from "./SectionItem";
+import SectionOptionsDialog from "./SectionOptionsDialog";
 
-// create a styled ul fro the lsit
 const StyledList = styled("ul")(({ theme }) => ({
   display: "grid",
   gap: theme.spacing(2),
@@ -12,39 +12,56 @@ const StyledList = styled("ul")(({ theme }) => ({
   padding: 0,
 }));
 
-const StyledListItem = styled("li")(({ theme }) => ({
-  display: "flex",
-  gap: theme.spacing(1),
-}));
+export default function SectionList({
+  sections,
+  setNameSectionDialogOpen,
+  setSelectedSection,
+  selectedSection,
+  onDeleteSection,
+  unassignedMinutes,
+  handleDurationChange,
+}) {
+  const [isOptionsDialogOpen, setIsOptionsDialogOpen] = useState(false);
 
-const SectionNumber = styled("span")(({ theme }) => ({
-  fontSize: ".8em",
-  fontWeight: 700,
-  // color: "#fff",
-  color: theme.palette.text.primary,
-  boxShadow: `inset 0 0 0 2px ${theme.palette.text.primary}`,
+  const handleDeleteSection = () => {
+    // Logic to delete the section
+    setIsOptionsDialogOpen(false);
+    onDeleteSection(selectedSection.name);
+    setSelectedSection(null);
+  };
 
-  // backgroundColor: theme.palette.text.primary,
-  height: "1.8em",
-  minWidth: "1.8em",
-  borderRadius: "50%",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-}));
+  const handleRenameSection = () => {
+    setIsOptionsDialogOpen(false);
+    setNameSectionDialogOpen(true);
+  };
 
-export default function SectionList({ sections }) {
+  const bindLongPress = useLongPress((e, { context: section }) => {
+    e.stopPropagation();
+    setSelectedSection(section);
+    setIsOptionsDialogOpen(true);
+  });
+
   return (
-    <StyledList>
-      {sections.map((section, index) => (
-        <StyledListItem key={section.name}>
-          <SectionNumber>{index + 1}</SectionNumber>
-
-          <Typography>{section.name}</Typography>
-
-          <MinutePicker />
-        </StyledListItem>
-      ))}
-    </StyledList>
+    <>
+      <StyledList>
+        {sections.map((section, index) => (
+          <SectionItem
+            key={section.name}
+            order={index + 1}
+            unassignedMinutes={unassignedMinutes}
+            onDurationChange={handleDurationChange}
+            {...section}
+            {...bindLongPress(section)}
+          />
+        ))}
+      </StyledList>
+      <SectionOptionsDialog
+        open={isOptionsDialogOpen}
+        section={selectedSection}
+        onClose={() => setIsOptionsDialogOpen(false)}
+        onRenameSection={handleRenameSection}
+        onDeleteSection={handleDeleteSection}
+      />
+    </>
   );
 }
